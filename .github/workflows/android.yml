@@ -30,7 +30,7 @@ jobs:
       - name: Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '9.9'
+          gradle-version: '9.3.0'
 
       - name: Build APK
         run: gradle -p examples/example_android_opengl3/android assembleDebug
