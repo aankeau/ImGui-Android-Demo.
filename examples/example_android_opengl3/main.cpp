@@ -201,68 +201,60 @@ void MainLoopStep()
     if (g_EglDisplay == EGL_NO_DISPLAY)
         return;
 
-    // Our state
-    // (we use static, which essentially makes the variable globals, as a convenience to keep the example code easy to follow)
-    static bool show_demo_window = true;
-    static bool show_another_window = false;
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    static bool esp_demo = false;
+    static bool aim_demo = false;
+    static float fov = 90.0f;
+    static float smoothness = 5.0f;
+    static ImVec4 clear_color = ImVec4(0.025f, 0.035f, 0.065f, 1.0f);
+    static bool styled = false;
 
-    // Poll Unicode characters via JNI
-    // FIXME: do not call this every frame because of JNI overhead
+    if (!styled)
+    {
+        ImGuiStyle& st = ImGui::GetStyle();
+        st.WindowRounding = 12.0f;
+        st.FrameRounding = 7.0f;
+        st.GrabRounding = 7.0f;
+        st.WindowPadding = ImVec2(18, 16);
+        st.Colors[ImGuiCol_WindowBg] = ImVec4(0.035f, 0.045f, 0.075f, 1.0f);
+        st.Colors[ImGuiCol_FrameBg] = ImVec4(0.09f, 0.12f, 0.19f, 1.0f);
+        st.Colors[ImGuiCol_Button] = ImVec4(0.05f, 0.35f, 0.65f, 1.0f);
+        st.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.08f, 0.48f, 0.85f, 1.0f);
+        st.Colors[ImGuiCol_CheckMark] = ImVec4(0.1f, 0.65f, 1.0f, 1.0f);
+        st.Colors[ImGuiCol_SliderGrab] = ImVec4(0.1f, 0.55f, 0.9f, 1.0f);
+        styled = true;
+    }
+
     PollUnicodeChars();
-
-    // Open on-screen (soft) input if requested by Dear ImGui
     static bool WantTextInputLast = false;
     if (io.WantTextInput && !WantTextInputLast)
         ShowSoftKeyboardInput();
     WantTextInputLast = io.WantTextInput;
 
-    // Start the Dear ImGui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplAndroid_NewFrame();
     ImGui::NewFrame();
 
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (show_demo_window)
-        ImGui::ShowDemoWindow(&show_demo_window);
+    ImGui::SetNextWindowSize(ImVec2(380, 430), ImGuiCond_FirstUseEver);
+    ImGui::Begin("NOVA | CONTROL PANEL");
+    ImGui::TextColored(ImVec4(0.1f, 0.65f, 1.0f, 1.0f), "ANDROID UI DEMO");
+    ImGui::Separator();
+    ImGui::Text("VISUAL SETTINGS (SIMULATION)");
+    ImGui::Checkbox("ESP demo", &esp_demo);
+    ImGui::Checkbox("Aimbot demo", &aim_demo);
+    ImGui::Separator();
+    ImGui::Text("CONFIGURATION");
+    ImGui::SliderFloat("FOV", &fov, 1.0f, 300.0f, "%.0f");
+    ImGui::SliderFloat("Smoothness", &smoothness, 1.0f, 20.0f, "%.1f");
+    ImGui::Separator();
+    ImGui::Text("ESP: %s", esp_demo ? "ON" : "OFF");
+    ImGui::Text("Aimbot: %s", aim_demo ? "ON" : "OFF");
+    ImGui::Text("FPS: %.1f", io.Framerate);
+    ImGui::TextDisabled("Standalone demo - no game connection.");
+    ImGui::End();
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-    {
-        static float f = 0.0f;
-        static int counter = 0;
-
-        ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
-
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &show_another_window);
-
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        ImGui::End();
-    }
-
-    // 3. Show another simple window.
-    if (show_another_window)
-    {
-        ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            show_another_window = false;
-        ImGui::End();
-    }
-
-    // Rendering
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
